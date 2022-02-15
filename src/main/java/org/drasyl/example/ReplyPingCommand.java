@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 import static org.drasyl.channel.tun.Tun4Packet.INET4_DESTINATION_ADDRESS;
+import static org.drasyl.channel.tun.Tun4Packet.INET4_HEADER_CHECKSUM;
 import static org.drasyl.channel.tun.Tun4Packet.INET4_SOURCE_ADDRESS;
 import static org.drasyl.channel.tun.jna.windows.Wintun.WintunGetAdapterLUID;
 
@@ -44,12 +45,14 @@ public class ReplyPingCommand implements Runnable {
     private String ifName;
     @Option(
             names = "--address",
+            required = true,
             description = "IP address assigned to the TUN device.",
             defaultValue = "10.10.10.10"
     )
     private String address;
     @Option(
             names = "--netmask-prefix",
+            required = true,
             description = "Netmask indicated by the number of bits of the prefix.",
             defaultValue = "24"
     )
