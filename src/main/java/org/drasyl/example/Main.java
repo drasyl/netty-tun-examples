@@ -2,11 +2,13 @@ package org.drasyl.example;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.HelpCommand;
 
 @Command(
         name = "netty-tun-examples",
         subcommands = {
-                PingCommand.class
+                HelpCommand.class,
+                ReplyPingCommand.class
         }
 )
 public class Main {

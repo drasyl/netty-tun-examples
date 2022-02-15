@@ -30,20 +30,30 @@ import static org.drasyl.channel.tun.Tun4Packet.INET4_SOURCE_ADDRESS;
 import static org.drasyl.channel.tun.jna.windows.Wintun.WintunGetAdapterLUID;
 
 @Command(
-        name = "ping",
-        description = "Creates a tun device that replies to ICMP Echo messages."
+        name = "reply-ping",
+        description = "Creates a tun device that replies to ICMP Echo messages.",
+        showDefaultValues = true
 )
-public class PingCommand implements Runnable {
+@SuppressWarnings({ "java:S106", "java:S112", "unused" })
+public class ReplyPingCommand implements Runnable {
     @Option(
             names = "--if-name",
+            description = "Desired name of the TUN device. If left empty, the OS will pick a name.",
             defaultValue = ""
     )
     private String ifName;
     @Option(
             names = "--address",
+            description = "IP address assigned to the TUN device.",
             defaultValue = "10.10.10.10"
     )
     private String address;
+    @Option(
+            names = "--netmask-prefix",
+            description = "Netmask indicated by the number of bits of the prefix.",
+            defaultValue = "24"
+    )
+    private int netmaskPrefix;
 
     @Override
     public void run() {
@@ -64,12 +74,12 @@ public class PingCommand implements Runnable {
             final Channel ch = b.bind(new TunAddress(ifName.isEmpty() ? null : ifName)).syncUninterruptibly().channel();
 
             final String name = ch.localAddress().toString();
-            System.out.println("Interface created: " + name);
+            System.out.println("TUN device created: " + name);
 
             if (PlatformDependent.isOsx()) {
                 exec("/sbin/ifconfig", name, "add", address, address);
                 exec("/sbin/ifconfig", name, "up");
-                exec("/sbin/route", "add", "-net", address + "/24", "-iface", name);
+                exec("/sbin/route", "add", "-net", address + '/' + netmaskPrefix, "-iface", name);
             }
             else if (PlatformDependent.isWindows()) {
                 // Windows
@@ -77,15 +87,16 @@ public class PingCommand implements Runnable {
 
                 final Pointer interfaceLuid = new Memory(8);
                 WintunGetAdapterLUID(adapter, interfaceLuid);
-                AddressAndNetmaskHelper.setIPv4AndNetmask(interfaceLuid, address, 24);
+                AddressAndNetmaskHelper.setIPv4AndNetmask(interfaceLuid, address, netmaskPrefix);
             }
             else {
                 // Linux
-                exec("/sbin/ip", "addr", "add", address + "/24", "dev", name);
+                exec("/sbin/ip", "addr", "add", address + '/' + netmaskPrefix, "dev", name);
                 exec("/sbin/ip", "link", "set", "dev", name, "up");
             }
 
-            System.out.println("Address assigned: " + address);
+            System.out.println("Address and netmask assigned: " + address + '/' + netmaskPrefix);
+            System.out.println("All pings addressed to this subnet should now be replied.");
 
             ch.closeFuture().syncUninterruptibly();
         }
@@ -127,15 +138,19 @@ public class PingCommand implements Runnable {
                     final int checksum = packet.content().getUnsignedShort(CHECKSUM);
 
                     // create response
-                    final ByteBuf buf = packet.content().retainedDuplicate();
+                    final ByteBuf buf = packet.content().retain();
                     buf.setBytes(INET4_SOURCE_ADDRESS, destination.getAddress());
                     buf.setBytes(INET4_DESTINATION_ADDRESS, source.getAddress());
                     buf.setByte(TYPE, ECHO_REPLY);
                     buf.setShort(CHECKSUM, checksum + 0x0800);
 
-                    System.out.println("Reply to echo from " + source.getHostAddress());
+                    System.out.println("Reply echo addressed to " + destination.getHostAddress() + " and received from " + source.getHostAddress());
                     final Tun4Packet response = new Tun4Packet(buf);
-                    ctx.writeAndFlush(response);
+                    ctx.writeAndFlush(response).addListener(future -> {
+                        if (!future.isSuccess()) {
+                            future.cause().printStackTrace(System.err);
+                        }
+                    });
                 }
             }
             else {
