@@ -8,9 +8,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.internal.PlatformDependent;
 import org.drasyl.channel.tun.InetProtocol;
 import org.drasyl.channel.tun.Tun4Packet;
@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 import static org.drasyl.channel.tun.Tun4Packet.INET4_DESTINATION_ADDRESS;
-import static org.drasyl.channel.tun.Tun4Packet.INET4_HEADER_CHECKSUM;
 import static org.drasyl.channel.tun.Tun4Packet.INET4_SOURCE_ADDRESS;
 import static org.drasyl.channel.tun.jna.windows.Wintun.WintunGetAdapterLUID;
 
@@ -60,7 +59,7 @@ public class ReplyPingCommand implements Runnable {
 
     @Override
     public void run() {
-        EventLoopGroup group = new NioEventLoopGroup(1);
+        EventLoopGroup group = new DefaultEventLoopGroup(1);
         try {
             final Bootstrap b = new Bootstrap()
                     .group(group)
