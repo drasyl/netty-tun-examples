@@ -21,7 +21,6 @@ import picocli.CommandLine.Option;
 import java.io.IOException;
 import java.net.InetAddress;
 
-import static java.util.Objects.requireNonNull;
 import static org.drasyl.channel.tun.jna.windows.Wintun.WintunGetAdapterLUID;
 
 @Command(
@@ -30,7 +29,7 @@ import static org.drasyl.channel.tun.jna.windows.Wintun.WintunGetAdapterLUID;
         showDefaultValues = true
 )
 @SuppressWarnings({ "java:S106", "java:S112", "unused" })
-public class ProxyCommand implements Runnable {
+public class EchoCommand implements Runnable {
     @Option(
             names = "--if-name",
             description = "Desired name of the TUN device. If left empty, the OS will pick a name.",

@@ -8,7 +8,7 @@ import picocli.CommandLine.HelpCommand;
         name = "netty-tun-examples",
         subcommands = {
                 HelpCommand.class,
-                ProxyCommand.class,
+                EchoCommand.class,
                 ReplyPingCommand.class
         }
 )
