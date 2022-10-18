@@ -25,6 +25,19 @@
             <artifactId>picocli</artifactId>
             <version>4.6.3</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>4.1.80.Final-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-kqueue</artifactId>
+            <version>4.1.80.Final-SNAPSHOT</version>
+            <classifier>osx-x86_64</classifier>
+        </dependency>
     </dependencies>
 
     <build>

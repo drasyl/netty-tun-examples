@@ -5,13 +5,16 @@ import com.sun.jna.Pointer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.kqueue.KQueueEventLoopGroup;
+import io.netty.channel.kqueue.KQueueTunChannel;
+import io.netty.channel.kqueue.TunAddress;
 import io.netty.util.internal.PlatformDependent;
-import org.drasyl.channel.tun.TunAddress;
 import org.drasyl.channel.tun.TunChannel;
 import org.drasyl.channel.tun.jna.windows.WindowsTunDevice;
 import org.drasyl.channel.tun.jna.windows.Wintun.WINTUN_ADAPTER_HANDLE;
@@ -46,11 +49,11 @@ public class EchoCommand implements Runnable {
 
     @Override
     public void run() {
-        EventLoopGroup group = new DefaultEventLoopGroup(1);
+        EventLoopGroup group = new KQueueEventLoopGroup(1);
         try {
             final Bootstrap b = new Bootstrap()
                     .group(group)
-                    .channel(TunChannel.class)
+                    .channel(KQueueTunChannel.class)
                     .handler(new ChannelInitializer<>() {
                         @Override
                         protected void initChannel(final Channel ch) {
@@ -113,7 +116,14 @@ public class EchoCommand implements Runnable {
         public void channelRead(final ChannelHandlerContext ctx,
                                 final Object msg) {
             // loopback
-            ctx.write(msg);
+            ctx.write(msg).addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(final ChannelFuture future) throws Exception {
+                    if (!future.isSuccess()) {
+                        future.cause().printStackTrace();
+                    }
+                }
+            });
         }
 
         @Override
@@ -121,5 +131,7 @@ public class EchoCommand implements Runnable {
             ctx.fireChannelReadComplete();
             ctx.flush();
         }
+
+
     }
 }
