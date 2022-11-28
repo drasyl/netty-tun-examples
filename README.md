@@ -1,4 +1,4 @@
-# Examples for [netty-tun](https://github.com/drasyl-overlay/netty-tun)
+# Examples for [netty-tun](https://github.com/drasyl/netty-tun)
 
 ```bash
 # build
